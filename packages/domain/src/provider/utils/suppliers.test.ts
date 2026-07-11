@@ -386,6 +386,40 @@ describe('getExpectedServicesFromKey', () => {
     expect(svc.endpoints[0].rpcType).toBe(RPCType.JSON_RPC); // 3
     expect(svc.endpoints[1].rpcType).toBe(RPCType.REST);     // 4
   });
+
+  it('uses endpoint overrides when calculating expected services', () => {
+    const key = {
+      address: 'pokt1supplier',
+      ownerAddress: 'pokt1owner',
+      delegatorRewardsAddress: null,
+      delegatorRevSharePercentage: null,
+      addressGroup: {
+        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        addressGroupServices: [
+          {
+            serviceId: 'svc1',
+            addSupplierShare: false,
+            supplierShare: 0,
+            revShare: [],
+            endpointOverrides: { [String(RPCType.JSON_RPC)]: 'https://override.example.com' },
+            service: {
+              endpoints: [
+                { rpcType: RPCType.JSON_RPC, url: 'https://{sid}.example.com' },
+                { rpcType: RPCType.REST, url: 'https://{sid}.example.com/rest' },
+              ],
+            },
+          },
+        ],
+      },
+    } as any;
+
+    const [service] = getExpectedServicesFromKey(key);
+
+    expect(service!.endpoints).toEqual([
+      { url: 'https://override.example.com', rpcType: RPCType.JSON_RPC, configs: [] },
+      { url: 'https://svc1.example.com/rest', rpcType: RPCType.REST, configs: [] },
+    ]);
+  });
 });
 
 // ── Fixture-based tests ─────────────────────────────────────────────────

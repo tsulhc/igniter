@@ -163,19 +163,24 @@ export function getExpectedServicesFromKey(key: KeyWithGroup): Array<SupplierSer
     const newExpectedService: SupplierServiceConfig = {
       serviceId: addressGroupService.serviceId,
       revShare: deduplicateRevShare(filteredRevShare),
-      endpoints: addressGroupService.service.endpoints?.map((endpoint) => ({
-        url: getEndpointInterpolatedUrl(endpoint, {
-          sid: addressGroupService.serviceId,
-          rm: key.addressGroup?.relayMiner?.identity || '',
-          region: key.addressGroup?.relayMiner?.region?.urlValue || '',
-          domain: key.addressGroup?.relayMiner?.domain || '',
-        }),
-        // Normalize rpcType to numeric to match BuildSupplierServiceConfigHandler
-        rpcType: typeof endpoint.rpcType === 'string'
-          ? (RPCTypeMap[endpoint.rpcType as keyof typeof RPCTypeMap] ?? -1)
-          : endpoint.rpcType,
-        configs: []
-      })),
+      endpoints: addressGroupService.service.endpoints?.map((endpoint) => {
+        const overrideUrl = addressGroupService.endpointOverrides?.[String(endpoint.rpcType)]
+
+        return {
+          // Keep expected services in sync with BuildSupplierServiceConfigHandler.
+          url: overrideUrl || getEndpointInterpolatedUrl(endpoint, {
+            sid: addressGroupService.serviceId,
+            rm: key.addressGroup?.relayMiner?.identity || '',
+            region: key.addressGroup?.relayMiner?.region?.urlValue || '',
+            domain: key.addressGroup?.relayMiner?.domain || '',
+          }),
+          // Normalize rpcType to numeric to match BuildSupplierServiceConfigHandler
+          rpcType: typeof endpoint.rpcType === 'string'
+            ? (RPCTypeMap[endpoint.rpcType as keyof typeof RPCTypeMap] ?? -1)
+            : endpoint.rpcType,
+          configs: []
+        }
+      }),
     }
 
     expectedServices.push(newExpectedService)
