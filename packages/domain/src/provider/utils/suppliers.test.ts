@@ -1,5 +1,5 @@
-import { RPCType, SupplierServiceConfig } from '@igniter/pocket/proto/pocket/shared/service';
-import { Supplier, ServiceConfigUpdate } from '@igniter/pocket/proto/pocket/shared/supplier';
+import { RPCType, SupplierServiceConfig } from "@igniter/pocket/proto/pocket/shared/service";
+import { Supplier, ServiceConfigUpdate } from "@igniter/pocket/proto/pocket/shared/supplier";
 import {
   getSchemeForRpcType,
   getUrlTokenFromRpcType,
@@ -7,7 +7,7 @@ import {
   getEndpointInterpolatedUrl,
   getSupplierActiveServices,
   getExpectedServicesFromKey,
-} from './suppliers';
+} from "./suppliers";
 import {
   matchingSupplierAndKey,
   zeroRevShareKey,
@@ -17,121 +17,121 @@ import {
   OWNER_ADDRESS,
   PROVIDER_ADDRESS,
   DELEGATOR_ADDRESS,
-} from './__fixtures__/supplier-data';
+} from "./__fixtures__/supplier-data";
 
 // ── getSchemeForRpcType ─────────────────────────────────────────────
-describe('getSchemeForRpcType', () => {
-  it('returns https for JSON_RPC', () => {
-    expect(getSchemeForRpcType(RPCType.JSON_RPC)).toBe('https');
+describe("getSchemeForRpcType", () => {
+  it("returns https for JSON_RPC", () => {
+    expect(getSchemeForRpcType(RPCType.JSON_RPC)).toBe("https");
   });
 
-  it('returns https for REST', () => {
-    expect(getSchemeForRpcType(RPCType.REST)).toBe('https');
+  it("returns https for REST", () => {
+    expect(getSchemeForRpcType(RPCType.REST)).toBe("https");
   });
 
-  it('returns grpcs for GRPC', () => {
-    expect(getSchemeForRpcType(RPCType.GRPC)).toBe('grpcs');
+  it("returns grpcs for GRPC", () => {
+    expect(getSchemeForRpcType(RPCType.GRPC)).toBe("grpcs");
   });
 
-  it('returns wss for WEBSOCKET', () => {
-    expect(getSchemeForRpcType(RPCType.WEBSOCKET)).toBe('wss');
+  it("returns wss for WEBSOCKET", () => {
+    expect(getSchemeForRpcType(RPCType.WEBSOCKET)).toBe("wss");
   });
 
-  it('falls back to https for unknown RPC types', () => {
-    expect(getSchemeForRpcType(RPCType.UNKNOWN_RPC)).toBe('https');
-    expect(getSchemeForRpcType(RPCType.UNRECOGNIZED)).toBe('https');
+  it("falls back to https for unknown RPC types", () => {
+    expect(getSchemeForRpcType(RPCType.UNKNOWN_RPC)).toBe("https");
+    expect(getSchemeForRpcType(RPCType.UNRECOGNIZED)).toBe("https");
   });
 });
 
 // ── getUrlTokenFromRpcType ──────────────────────────────────────────
-describe('getUrlTokenFromRpcType', () => {
-  it('returns json for JSON_RPC', () => {
-    expect(getUrlTokenFromRpcType(RPCType.JSON_RPC)).toBe('json');
+describe("getUrlTokenFromRpcType", () => {
+  it("returns json for JSON_RPC", () => {
+    expect(getUrlTokenFromRpcType(RPCType.JSON_RPC)).toBe("json");
   });
 
-  it('returns rest for REST', () => {
-    expect(getUrlTokenFromRpcType(RPCType.REST)).toBe('rest');
+  it("returns rest for REST", () => {
+    expect(getUrlTokenFromRpcType(RPCType.REST)).toBe("rest");
   });
 
-  it('returns grpc for GRPC', () => {
-    expect(getUrlTokenFromRpcType(RPCType.GRPC)).toBe('grpc');
+  it("returns grpc for GRPC", () => {
+    expect(getUrlTokenFromRpcType(RPCType.GRPC)).toBe("grpc");
   });
 
-  it('returns ws for WEBSOCKET', () => {
-    expect(getUrlTokenFromRpcType(RPCType.WEBSOCKET)).toBe('ws');
+  it("returns ws for WEBSOCKET", () => {
+    expect(getUrlTokenFromRpcType(RPCType.WEBSOCKET)).toBe("ws");
   });
 
-  it('falls back to json for unknown RPC types', () => {
-    expect(getUrlTokenFromRpcType(RPCType.UNKNOWN_RPC)).toBe('json');
+  it("falls back to json for unknown RPC types", () => {
+    expect(getUrlTokenFromRpcType(RPCType.UNKNOWN_RPC)).toBe("json");
   });
 });
 
 // ── getDefaultUrlWithSchemeByRpcType ────────────────────────────────
-describe('getDefaultUrlWithSchemeByRpcType', () => {
-  it('replaces {scheme} with the correct scheme for JSON_RPC', () => {
+describe("getDefaultUrlWithSchemeByRpcType", () => {
+  it("replaces {scheme} with the correct scheme for JSON_RPC", () => {
     const url = getDefaultUrlWithSchemeByRpcType(RPCType.JSON_RPC);
-    expect(url).toContain('https://');
-    expect(url).not.toContain('{scheme}');
+    expect(url).toContain("https://");
+    expect(url).not.toContain("{scheme}");
   });
 
-  it('replaces {scheme} with grpcs for GRPC', () => {
+  it("replaces {scheme} with grpcs for GRPC", () => {
     const url = getDefaultUrlWithSchemeByRpcType(RPCType.GRPC);
-    expect(url).toContain('grpcs://');
+    expect(url).toContain("grpcs://");
   });
 });
 
 // ── getEndpointInterpolatedUrl ──────────────────────────────────────
-describe('getEndpointInterpolatedUrl', () => {
-  it('replaces all placeholders in the URL', () => {
+describe("getEndpointInterpolatedUrl", () => {
+  it("replaces all placeholders in the URL", () => {
     const endpoint = {
       rpcType: RPCType.JSON_RPC,
-      url: 'https://{region}-{rm}-{sid}-{protocol}.{domain}',
+      url: "https://{region}-{rm}-{sid}-{protocol}.{domain}",
     };
-    const params = { sid: 'svc1', rm: 'miner1', region: 'us-east', domain: 'example.com' };
+    const params = { sid: "svc1", rm: "miner1", region: "us-east", domain: "example.com" };
     const result = getEndpointInterpolatedUrl(endpoint, params);
 
-    expect(result).toBe('https://us-east-miner1-svc1-json.example.com');
+    expect(result).toBe("https://us-east-miner1-svc1-json.example.com");
   });
 
-  it('preserves unknown placeholders', () => {
+  it("preserves unknown placeholders", () => {
     const endpoint = {
       rpcType: RPCType.JSON_RPC,
-      url: 'https://{unknown}.example.com',
+      url: "https://{unknown}.example.com",
     };
-    const params = { sid: 'svc1', rm: 'miner1', region: 'us-east', domain: 'example.com' };
+    const params = { sid: "svc1", rm: "miner1", region: "us-east", domain: "example.com" };
     const result = getEndpointInterpolatedUrl(endpoint, params);
 
-    expect(result).toBe('https://{unknown}.example.com');
+    expect(result).toBe("https://{unknown}.example.com");
   });
 
-  it('uses default URL template when endpoint has no url', () => {
+  it("uses default URL template when endpoint has no url", () => {
     const endpoint = {
       rpcType: RPCType.JSON_RPC,
-      url: '',
+      url: "",
     };
-    const params = { sid: 'svc1', rm: 'miner1', region: 'us-east', domain: 'example.com' };
+    const params = { sid: "svc1", rm: "miner1", region: "us-east", domain: "example.com" };
     const result = getEndpointInterpolatedUrl(endpoint, params);
 
-    expect(result).toContain('us-east');
-    expect(result).toContain('miner1');
-    expect(result).toContain('svc1');
-    expect(result).toContain('example.com');
+    expect(result).toContain("us-east");
+    expect(result).toContain("miner1");
+    expect(result).toContain("svc1");
+    expect(result).toContain("example.com");
   });
 
-  it('injects the protocol token', () => {
+  it("injects the protocol token", () => {
     const endpoint = {
       rpcType: RPCType.GRPC,
-      url: 'grpcs://{region}-{protocol}.{domain}',
+      url: "grpcs://{region}-{protocol}.{domain}",
     };
-    const params = { sid: 'svc1', rm: 'miner1', region: 'eu', domain: 'test.io' };
+    const params = { sid: "svc1", rm: "miner1", region: "eu", domain: "test.io" };
     const result = getEndpointInterpolatedUrl(endpoint, params);
 
-    expect(result).toBe('grpcs://eu-grpc.test.io');
+    expect(result).toBe("grpcs://eu-grpc.test.io");
   });
 });
 
 // ── getSupplierActiveServices ───────────────────────────────────────
-describe('getSupplierActiveServices', () => {
+describe("getSupplierActiveServices", () => {
   const svc = (id: string): SupplierServiceConfig => ({
     serviceId: id,
     endpoints: [],
@@ -148,58 +148,58 @@ describe('getSupplierActiveServices', () => {
     deactivationHeight,
   });
 
-  it('returns all active services when no deactivations are scheduled', () => {
+  it("returns all active services when no deactivations are scheduled", () => {
     const supplier = {
-      services: [svc('A'), svc('B')],
+      services: [svc("A"), svc("B")],
       serviceConfigHistory: [],
     } as unknown as Supplier;
 
     const result = getSupplierActiveServices(supplier, 100);
     expect(result).toHaveLength(2);
-    expect(result.map((s) => s.serviceId)).toEqual(['A', 'B']);
+    expect(result.map((s) => s.serviceId)).toEqual(["A", "B"]);
   });
 
-  it('excludes services scheduled for deactivation after current height', () => {
-    const serviceA = svc('A');
-    const serviceB = svc('B');
+  it("excludes services scheduled for deactivation after current height", () => {
+    const serviceA = svc("A");
+    const serviceB = svc("B");
     const supplier = {
       services: [serviceA, serviceB],
       serviceConfigHistory: [
-        historyEntry(svc('A'), 50, 150), // deactivation at 150 > 100 → scheduled for removal
+        historyEntry(svc("A"), 50, 150), // deactivation at 150 > 100 → scheduled for removal
       ],
     } as unknown as Supplier;
 
     const result = getSupplierActiveServices(supplier, 100);
-    expect(result.map((s) => s.serviceId)).toEqual(['B']);
+    expect(result.map((s) => s.serviceId)).toEqual(["B"]);
   });
 
-  it('includes services scheduled for activation after current height', () => {
+  it("includes services scheduled for activation after current height", () => {
     const supplier = {
-      services: [svc('A')],
+      services: [svc("A")],
       serviceConfigHistory: [
-        historyEntry(svc('C'), 200, 0), // activation at 200 > 100, no deactivation
+        historyEntry(svc("C"), 200, 0), // activation at 200 > 100, no deactivation
       ],
     } as unknown as Supplier;
 
     const result = getSupplierActiveServices(supplier, 100);
     const ids = result.map((s) => s.serviceId);
-    expect(ids).toContain('A');
-    expect(ids).toContain('C');
+    expect(ids).toContain("A");
+    expect(ids).toContain("C");
   });
 
-  it('excludes history entries that were deactivated before current height', () => {
+  it("excludes history entries that were deactivated before current height", () => {
     const supplier = {
-      services: [svc('A')],
+      services: [svc("A")],
       serviceConfigHistory: [
-        historyEntry(svc('C'), 200, 50), // deactivation at 50 <= 100 → removed before activation
+        historyEntry(svc("C"), 200, 50), // deactivation at 50 <= 100 → removed before activation
       ],
     } as unknown as Supplier;
 
     const result = getSupplierActiveServices(supplier, 100);
-    expect(result.map((s) => s.serviceId)).toEqual(['A']);
+    expect(result.map((s) => s.serviceId)).toEqual(["A"]);
   });
 
-  it('handles empty services and history', () => {
+  it("handles empty services and history", () => {
     const supplier = {
       services: [],
       serviceConfigHistory: [],
@@ -211,23 +211,23 @@ describe('getSupplierActiveServices', () => {
 });
 
 // ── getExpectedServicesFromKey ───────────────────────────────────────
-describe('getExpectedServicesFromKey', () => {
-  it('builds expected services with delegator and owner rev share', () => {
+describe("getExpectedServicesFromKey", () => {
+  it("builds expected services with delegator and owner rev share", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
-      delegatorRewardsAddress: 'pokt1delegator',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
+      delegatorRewardsAddress: "pokt1delegator",
       delegatorRevSharePercentage: 10,
       addressGroup: {
-        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
         addressGroupServices: [
           {
-            serviceId: 'svc1',
+            serviceId: "svc1",
             addSupplierShare: false,
             supplierShare: 0,
-            revShare: [{ address: 'pokt1provider', share: 20 }],
+            revShare: [{ address: "pokt1provider", share: 20 }],
             service: {
-              endpoints: [{ rpcType: RPCType.JSON_RPC, url: 'https://{region}.{domain}' }],
+              endpoints: [{ rpcType: RPCType.JSON_RPC, url: "https://{region}.{domain}" }],
             },
           },
         ],
@@ -238,34 +238,34 @@ describe('getExpectedServicesFromKey', () => {
     expect(result).toHaveLength(1);
 
     const svc = result[0]!;
-    expect(svc.serviceId).toBe('svc1');
+    expect(svc.serviceId).toBe("svc1");
 
     // delegator=10, provider=20, owner=70
     expect(svc.revShare).toEqual(
       expect.arrayContaining([
-        { address: 'pokt1delegator', revSharePercentage: 10 },
-        { address: 'pokt1provider', revSharePercentage: 20 },
-        { address: 'pokt1owner', revSharePercentage: 70 },
+        { address: "pokt1delegator", revSharePercentage: 10 },
+        { address: "pokt1provider", revSharePercentage: 20 },
+        { address: "pokt1owner", revSharePercentage: 70 },
       ]),
     );
   });
 
-  it('adds supplier share when addSupplierShare is true', () => {
+  it("adds supplier share when addSupplierShare is true", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
       delegatorRewardsAddress: null,
       delegatorRevSharePercentage: null,
       addressGroup: {
-        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
         addressGroupServices: [
           {
-            serviceId: 'svc1',
+            serviceId: "svc1",
             addSupplierShare: true,
             supplierShare: 15,
             revShare: [],
             service: {
-              endpoints: [{ rpcType: RPCType.JSON_RPC, url: 'https://test.com' }],
+              endpoints: [{ rpcType: RPCType.JSON_RPC, url: "https://test.com" }],
             },
           },
         ],
@@ -277,27 +277,27 @@ describe('getExpectedServicesFromKey', () => {
 
     // supplier=15, owner=85
     expect(svc.revShare).toEqual([
-      { address: 'pokt1supplier', revSharePercentage: 15 },
-      { address: 'pokt1owner', revSharePercentage: 85 },
+      { address: "pokt1supplier", revSharePercentage: 15 },
+      { address: "pokt1owner", revSharePercentage: 85 },
     ]);
   });
 
-  it('does not add owner share when rev shares already total 100%', () => {
+  it("does not add owner share when rev shares already total 100%", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
-      delegatorRewardsAddress: 'pokt1delegator',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
+      delegatorRewardsAddress: "pokt1delegator",
       delegatorRevSharePercentage: 50,
       addressGroup: {
-        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
         addressGroupServices: [
           {
-            serviceId: 'svc1',
+            serviceId: "svc1",
             addSupplierShare: true,
             supplierShare: 20,
-            revShare: [{ address: 'pokt1provider', share: 30 }],
+            revShare: [{ address: "pokt1provider", share: 30 }],
             service: {
-              endpoints: [{ rpcType: RPCType.JSON_RPC, url: 'https://test.com' }],
+              endpoints: [{ rpcType: RPCType.JSON_RPC, url: "https://test.com" }],
             },
           },
         ],
@@ -309,35 +309,35 @@ describe('getExpectedServicesFromKey', () => {
 
     // delegator=50, supplier=20, provider=30, total=100 → no owner entry
     expect(svc.revShare).toHaveLength(3);
-    expect(svc.revShare.find((r) => r.address === 'pokt1owner')).toBeUndefined();
+    expect(svc.revShare.find((r) => r.address === "pokt1owner")).toBeUndefined();
   });
 
-  it('returns empty array when key has no address group services', () => {
+  it("returns empty array when key has no address group services", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
       addressGroup: { addressGroupServices: [] },
     } as any;
 
     expect(getExpectedServicesFromKey(key)).toEqual([]);
   });
 
-  it('filters out 0% rev share entries and recalculates owner remainder', () => {
+  it("filters out 0% rev share entries and recalculates owner remainder", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
-      delegatorRewardsAddress: 'pokt1delegator',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
+      delegatorRewardsAddress: "pokt1delegator",
       delegatorRevSharePercentage: 0, // 0% should be excluded
       addressGroup: {
-        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
         addressGroupServices: [
           {
-            serviceId: 'svc1',
+            serviceId: "svc1",
             addSupplierShare: true,
             supplierShare: 0, // 0% should also be excluded
-            revShare: [{ address: 'pokt1provider', share: 20 }],
+            revShare: [{ address: "pokt1provider", share: 20 }],
             service: {
-              endpoints: [{ rpcType: RPCType.JSON_RPC, url: 'https://test.com' }],
+              endpoints: [{ rpcType: RPCType.JSON_RPC, url: "https://test.com" }],
             },
           },
         ],
@@ -350,29 +350,29 @@ describe('getExpectedServicesFromKey', () => {
     // delegator=0 (filtered), supplier=0 (filtered), provider=20, owner=80
     expect(svc.revShare).toHaveLength(2);
     expect(svc.revShare).toEqual([
-      { address: 'pokt1provider', revSharePercentage: 20 },
-      { address: 'pokt1owner', revSharePercentage: 80 },
+      { address: "pokt1provider", revSharePercentage: 20 },
+      { address: "pokt1owner", revSharePercentage: 80 },
     ]);
   });
 
-  it('normalizes rpcType to numeric enum values', () => {
+  it("normalizes rpcType to numeric enum values", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
       delegatorRewardsAddress: null,
       delegatorRevSharePercentage: null,
       addressGroup: {
-        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
         addressGroupServices: [
           {
-            serviceId: 'svc1',
+            serviceId: "svc1",
             addSupplierShare: false,
             supplierShare: 0,
             revShare: [],
             service: {
               endpoints: [
-                { rpcType: 'JSON_RPC' as any, url: 'https://test.com' },
-                { rpcType: 'REST' as any, url: 'https://test.com/rest' },
+                { rpcType: "JSON_RPC" as any, url: "https://test.com" },
+                { rpcType: "REST" as any, url: "https://test.com/rest" },
               ],
             },
           },
@@ -384,28 +384,28 @@ describe('getExpectedServicesFromKey', () => {
     const svc = result[0]!;
 
     expect(svc.endpoints[0].rpcType).toBe(RPCType.JSON_RPC); // 3
-    expect(svc.endpoints[1].rpcType).toBe(RPCType.REST);     // 4
+    expect(svc.endpoints[1].rpcType).toBe(RPCType.REST); // 4
   });
 
-  it('uses endpoint overrides when calculating expected services', () => {
+  it("uses endpoint overrides when calculating expected services", () => {
     const key = {
-      address: 'pokt1supplier',
-      ownerAddress: 'pokt1owner',
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
       delegatorRewardsAddress: null,
       delegatorRevSharePercentage: null,
       addressGroup: {
-        relayMiner: { identity: 'rm1', domain: 'example.com', region: { urlValue: 'us' } },
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
         addressGroupServices: [
           {
-            serviceId: 'svc1',
+            serviceId: "svc1",
             addSupplierShare: false,
             supplierShare: 0,
             revShare: [],
-            endpointOverrides: { [String(RPCType.JSON_RPC)]: 'https://override.example.com' },
+            endpointOverrides: { [String(RPCType.JSON_RPC)]: "https://override.example.com" },
             service: {
               endpoints: [
-                { rpcType: RPCType.JSON_RPC, url: 'https://{sid}.example.com' },
-                { rpcType: RPCType.REST, url: 'https://{sid}.example.com/rest' },
+                { rpcType: RPCType.JSON_RPC, url: "https://{sid}.example.com" },
+                { rpcType: RPCType.REST, url: "https://{sid}.example.com/rest" },
               ],
             },
           },
@@ -416,48 +416,48 @@ describe('getExpectedServicesFromKey', () => {
     const [service] = getExpectedServicesFromKey(key);
 
     expect(service!.endpoints).toEqual([
-      { url: 'https://override.example.com', rpcType: RPCType.JSON_RPC, configs: [] },
-      { url: 'https://svc1.example.com/rest', rpcType: RPCType.REST, configs: [] },
+      { url: "https://override.example.com", rpcType: RPCType.JSON_RPC, configs: [] },
+      { url: "https://svc1.example.com/rest", rpcType: RPCType.REST, configs: [] },
     ]);
   });
 });
 
 // ── Fixture-based tests ─────────────────────────────────────────────────
-describe('with realistic fixtures', () => {
-  describe('getSupplierActiveServices', () => {
-    it('returns correct active services for multi-generation history at height 250', () => {
+describe("with realistic fixtures", () => {
+  describe("getSupplierActiveServices", () => {
+    it("returns correct active services for multi-generation history at height 250", () => {
       // At height 250: anvil active, eth-mainnet (new) active,
       // solana-mainnet pending (activationHeight 300 > 250)
       const result = getSupplierActiveServices(multiGenerationHistory, 250);
       const ids = result.map((s) => s.serviceId).sort();
 
       // anvil and eth-mainnet are in services[], solana-mainnet is pending activation
-      expect(ids).toEqual(['anvil', 'eth-mainnet', 'solana-mainnet']);
+      expect(ids).toEqual(["anvil", "eth-mainnet", "solana-mainnet"]);
     });
 
-    it('excludes deactivated services at current height', () => {
+    it("excludes deactivated services at current height", () => {
       // deactivatedServicesSupplier has eth-mainnet deactivation at 250
       // At height 200, deactivationHeight 250 > 200 means it's scheduled for removal
       const result = getSupplierActiveServices(deactivatedServicesSupplier, 200);
       const ids = result.map((s) => s.serviceId);
 
-      expect(ids).toContain('anvil');
-      expect(ids).not.toContain('eth-mainnet');
+      expect(ids).toContain("anvil");
+      expect(ids).not.toContain("eth-mainnet");
     });
 
-    it('includes services pending activation from history', () => {
+    it("includes services pending activation from history", () => {
       // At height 150, solana-mainnet has activationHeight 300 > 150 and deactivationHeight 0
       const result = getSupplierActiveServices(multiGenerationHistory, 150);
       const ids = result.map((s) => s.serviceId);
 
-      expect(ids).toContain('solana-mainnet');
+      expect(ids).toContain("solana-mainnet");
     });
 
-    it('returns empty services for pristine supplier', () => {
+    it("returns empty services for pristine supplier", () => {
       const pristine: Supplier = {
         ownerAddress: OWNER_ADDRESS,
-        operatorAddress: 'pokt1oper8k2g4jd6h7m9w1c3f5n0b6v4r8q2s7t1e',
-        stake: { denom: 'upokt', amount: '100000000' },
+        operatorAddress: "pokt1oper8k2g4jd6h7m9w1c3f5n0b6v4r8q2s7t1e",
+        stake: { denom: "upokt", amount: "100000000" },
         services: [],
         unstakeSessionEndHeight: 0,
         serviceConfigHistory: [],
@@ -468,15 +468,15 @@ describe('with realistic fixtures', () => {
     });
   });
 
-  describe('getExpectedServicesFromKey', () => {
-    it('produces config matching a correctly staked supplier', () => {
+  describe("getExpectedServicesFromKey", () => {
+    it("produces config matching a correctly staked supplier", () => {
       const expected = getExpectedServicesFromKey(matchingSupplierAndKey.key);
 
       // Should produce 2 services: anvil and eth-mainnet
       expect(expected).toHaveLength(2);
 
-      const anvilExpected = expected.find((s) => s.serviceId === 'anvil');
-      const ethExpected = expected.find((s) => s.serviceId === 'eth-mainnet');
+      const anvilExpected = expected.find((s) => s.serviceId === "anvil");
+      const ethExpected = expected.find((s) => s.serviceId === "eth-mainnet");
 
       expect(anvilExpected).toBeDefined();
       expect(ethExpected).toBeDefined();
@@ -495,7 +495,7 @@ describe('with realistic fixtures', () => {
       expect(ethExpected!.endpoints).toHaveLength(2);
     });
 
-    it('filters out 0% revShare entries to match BuildSupplierServiceConfigHandler', () => {
+    it("filters out 0% revShare entries to match BuildSupplierServiceConfigHandler", () => {
       const expected = getExpectedServicesFromKey(zeroRevShareKey);
 
       expect(expected).toHaveLength(1);
@@ -506,7 +506,7 @@ describe('with realistic fixtures', () => {
       expect(delegatorEntry).toBeUndefined();
     });
 
-    it('calculates owner remainder from filtered revShare sum', () => {
+    it("calculates owner remainder from filtered revShare sum", () => {
       const expected = getExpectedServicesFromKey(zeroRevShareKey);
       const svc = expected[0]!;
 
@@ -517,7 +517,7 @@ describe('with realistic fixtures', () => {
       expect(ownerEntry!.revSharePercentage).toBe(80);
     });
 
-    it('uses stakeOwner as owner address when ownerAddress is empty', () => {
+    it("uses stakeOwner as owner address when ownerAddress is empty", () => {
       const expected = getExpectedServicesFromKey(emptyOwnerKey);
 
       expect(expected).toHaveLength(1);

@@ -1,56 +1,59 @@
-import {SupplierEndpointInterpolationParams} from "@igniter/domain/provider/models";
-import {Supplier, ServiceConfigUpdate} from "@igniter/pocket/proto/pocket/shared/supplier";
-import {RPCType, SupplierEndpoint, SupplierServiceConfig} from '@igniter/pocket/proto/pocket/shared/service'
-import {PROTOCOL_DEFAULT_URL} from "@igniter/domain/provider/constants";
-import {KeyWithGroup} from "@igniter/db/provider/schema";
-import {RPCTypeMap} from '@igniter/pocket/constants';
-import {deduplicateRevShare} from "./services";
+import { SupplierEndpointInterpolationParams } from "@igniter/domain/provider/models";
+import { Supplier, ServiceConfigUpdate } from "@igniter/pocket/proto/pocket/shared/supplier";
+import { RPCType, SupplierEndpoint, SupplierServiceConfig } from "@igniter/pocket/proto/pocket/shared/service";
+import { PROTOCOL_DEFAULT_URL } from "@igniter/domain/provider/constants";
+import { KeyWithGroup } from "@igniter/db/provider/schema";
+import { RPCTypeMap } from "@igniter/pocket/constants";
+import { deduplicateRevShare } from "./services";
 
 export function getSchemeForRpcType(rpcType: RPCType) {
-    switch (rpcType) {
-        case RPCType.JSON_RPC:
-        case RPCType.REST:
-            return 'https';
-        case RPCType.GRPC:
-            return 'grpcs';
-        case RPCType.WEBSOCKET:
-            return 'wss';
-        default:
-            return 'https';
-    }
+  switch (rpcType) {
+    case RPCType.JSON_RPC:
+    case RPCType.REST:
+      return "https";
+    case RPCType.GRPC:
+      return "grpcs";
+    case RPCType.WEBSOCKET:
+      return "wss";
+    default:
+      return "https";
+  }
 }
 
 export function getUrlTokenFromRpcType(rpcType: RPCType) {
-    switch (rpcType) {
-        case RPCType.JSON_RPC:
-            return 'json';
-        case RPCType.REST:
-            return 'rest';
-        case RPCType.GRPC:
-            return 'grpc';
-        case RPCType.WEBSOCKET:
-            return 'ws';
-        default:
-            return 'json';
-    }
+  switch (rpcType) {
+    case RPCType.JSON_RPC:
+      return "json";
+    case RPCType.REST:
+      return "rest";
+    case RPCType.GRPC:
+      return "grpc";
+    case RPCType.WEBSOCKET:
+      return "ws";
+    default:
+      return "json";
+  }
 }
 
 export function getDefaultUrlWithSchemeByRpcType(rpcType: RPCType) {
-    return PROTOCOL_DEFAULT_URL.replace('{scheme}', getSchemeForRpcType(rpcType));
+  return PROTOCOL_DEFAULT_URL.replace("{scheme}", getSchemeForRpcType(rpcType));
 }
 
-export function getEndpointInterpolatedUrl(endpoint: Pick<SupplierEndpoint, 'rpcType' | 'url'>, params: SupplierEndpointInterpolationParams) {
-    const protocol = getUrlTokenFromRpcType(endpoint.rpcType!);
-    const url = endpoint.url || getDefaultUrlWithSchemeByRpcType(endpoint.rpcType!);
+export function getEndpointInterpolatedUrl(
+  endpoint: Pick<SupplierEndpoint, "rpcType" | "url">,
+  params: SupplierEndpointInterpolationParams,
+) {
+  const protocol = getUrlTokenFromRpcType(endpoint.rpcType!);
+  const url = endpoint.url || getDefaultUrlWithSchemeByRpcType(endpoint.rpcType!);
 
-    const data: Record<string, string> = {
-        ...params,
-        protocol,
-    };
+  const data: Record<string, string> = {
+    ...params,
+    protocol,
+  };
 
-    return url.replace(/{(\w+)}/g, (_match: string, key: string) => {
-        return data[key] || `{${key}}`;
-    });
+  return url.replace(/{(\w+)}/g, (_match: string, key: string) => {
+    return data[key] || `{${key}}`;
+  });
 }
 
 /**
@@ -74,39 +77,33 @@ export function getEndpointInterpolatedUrl(endpoint: Pick<SupplierEndpoint, 'rpc
  * @param supplier      Full supplier object returned from the chain.
  * @param currentHeight Current block height you are evaluating against.
  */
-export function getSupplierActiveServices(
-  supplier: Supplier,
-  currentHeight: number,
-): SupplierServiceConfig[] {
-  const result = new Set<SupplierServiceConfig>()
+export function getSupplierActiveServices(supplier: Supplier, currentHeight: number): SupplierServiceConfig[] {
+  const result = new Set<SupplierServiceConfig>();
 
-  const scheduledDeactivations = new Set<string>()
+  const scheduledDeactivations = new Set<string>();
   supplier.serviceConfigHistory.forEach((h: ServiceConfigUpdate) => {
     if (h.deactivationHeight > currentHeight && h.service?.serviceId) {
-      scheduledDeactivations.add(h.service.serviceId)
+      scheduledDeactivations.add(h.service.serviceId);
     }
-  })
-
+  });
 
   supplier.services.forEach((s: SupplierServiceConfig) => {
-    if (!scheduledDeactivations.has(s.serviceId)) result.add(s)
-  })
-
+    if (!scheduledDeactivations.has(s.serviceId)) result.add(s);
+  });
 
   supplier.serviceConfigHistory.forEach((h: ServiceConfigUpdate) => {
-    const id = h.service?.serviceId
-    const willActivate = h.activationHeight > currentHeight
-    const removedBeforeActivation =
-      h.deactivationHeight !== 0 && h.deactivationHeight <= currentHeight
+    const id = h.service?.serviceId;
+    const willActivate = h.activationHeight > currentHeight;
+    const removedBeforeActivation = h.deactivationHeight !== 0 && h.deactivationHeight <= currentHeight;
 
     if (willActivate && !removedBeforeActivation) {
       if (h.service) {
-        result.add(h.service)
+        result.add(h.service);
       }
     }
-  })
+  });
 
-  return [...result]
+  return [...result];
 }
 
 /**
@@ -118,73 +115,76 @@ export function getSupplierActiveServices(
  * @returns Array of expected SupplierServiceConfig
  */
 export function getExpectedServicesFromKey(key: KeyWithGroup): Array<SupplierServiceConfig> {
-  const expectedServices: Array<SupplierServiceConfig> = []
+  const expectedServices: Array<SupplierServiceConfig> = [];
 
   // Use stakeOwner (from chain) as the authoritative owner address,
   // falling back to ownerAddress (from DB) for backwards compatibility.
-  const ownerAddress = key.stakeOwner || key.ownerAddress
+  const ownerAddress = key.stakeOwner || key.ownerAddress;
 
   for (const addressGroupService of key?.addressGroup?.addressGroupServices || []) {
-    const revShare: SupplierServiceConfig['revShare'] = []
+    const revShare: SupplierServiceConfig["revShare"] = [];
 
     if (key.delegatorRewardsAddress) {
       revShare.push({
         address: key.delegatorRewardsAddress,
         revSharePercentage: key.delegatorRevSharePercentage ?? 0,
-      })
+      });
     }
 
     if (addressGroupService.addSupplierShare) {
       revShare.push({
         address: key.address,
         revSharePercentage: addressGroupService.supplierShare ?? 0,
-      })
+      });
     }
 
     for (const revShareElement of addressGroupService.revShare) {
       revShare.push({
         address: revShareElement.address,
         revSharePercentage: revShareElement.share,
-      })
+      });
     }
 
     // Filter out 0% entries to match BuildSupplierServiceConfigHandler behavior
-    const filteredRevShare = revShare.filter(r => r.revSharePercentage > 0)
+    const filteredRevShare = revShare.filter((r) => r.revSharePercentage > 0);
 
     // Calculate owner remainder from filtered sum (not pre-filter)
-    const revShareSum = filteredRevShare.reduce((sum, r) => sum + r.revSharePercentage, 0)
+    const revShareSum = filteredRevShare.reduce((sum, r) => sum + r.revSharePercentage, 0);
     if (revShareSum < 100 && ownerAddress) {
       filteredRevShare.push({
         address: ownerAddress,
         revSharePercentage: 100 - revShareSum,
-      })
+      });
     }
 
     const newExpectedService: SupplierServiceConfig = {
       serviceId: addressGroupService.serviceId,
       revShare: deduplicateRevShare(filteredRevShare),
       endpoints: addressGroupService.service.endpoints?.map((endpoint) => {
-        const overrideUrl = addressGroupService.endpointOverrides?.[String(endpoint.rpcType)]
+        const overrideUrl = addressGroupService.endpointOverrides?.[String(endpoint.rpcType)];
 
         return {
           // Keep expected services in sync with BuildSupplierServiceConfigHandler.
-          url: overrideUrl || getEndpointInterpolatedUrl(endpoint, {
-            sid: addressGroupService.serviceId,
-            rm: key.addressGroup?.relayMiner?.identity || '',
-            region: key.addressGroup?.relayMiner?.region?.urlValue || '',
-            domain: key.addressGroup?.relayMiner?.domain || '',
-          }),
+          url:
+            overrideUrl ||
+            getEndpointInterpolatedUrl(endpoint, {
+              sid: addressGroupService.serviceId,
+              rm: key.addressGroup?.relayMiner?.identity || "",
+              region: key.addressGroup?.relayMiner?.region?.urlValue || "",
+              domain: key.addressGroup?.relayMiner?.domain || "",
+            }),
           // Normalize rpcType to numeric to match BuildSupplierServiceConfigHandler
-          rpcType: typeof endpoint.rpcType === 'string'
-            ? (RPCTypeMap[endpoint.rpcType as keyof typeof RPCTypeMap] ?? -1)
-            : endpoint.rpcType,
-          configs: []
-        }
+          rpcType:
+            typeof endpoint.rpcType === "string"
+              ? (RPCTypeMap[endpoint.rpcType as keyof typeof RPCTypeMap] ?? -1)
+              : endpoint.rpcType,
+          configs: [],
+        };
       }),
-    }
+    };
 
-    expectedServices.push(newExpectedService)
+    expectedServices.push(newExpectedService);
   }
 
-  return expectedServices
+  return expectedServices;
 }
