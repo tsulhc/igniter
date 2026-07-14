@@ -6,6 +6,14 @@ import { KeyWithGroup } from "@igniter/db/provider/schema";
 import { RPCTypeMap } from "@igniter/pocket/constants";
 import { deduplicateRevShare } from "./services";
 
+export function normalizeRpcType(rpcType: RPCType | string | undefined): RPCType {
+  if (typeof rpcType === "string") {
+    return RPCTypeMap[rpcType as keyof typeof RPCTypeMap] ?? RPCType.UNRECOGNIZED;
+  }
+
+  return rpcType ?? RPCType.UNRECOGNIZED;
+}
+
 export function getSchemeForRpcType(rpcType: RPCType) {
   switch (rpcType) {
     case RPCType.JSON_RPC:
@@ -161,23 +169,23 @@ export function getExpectedServicesFromKey(key: KeyWithGroup): Array<SupplierSer
       serviceId: addressGroupService.serviceId,
       revShare: deduplicateRevShare(filteredRevShare),
       endpoints: addressGroupService.service.endpoints?.map((endpoint) => {
-        const overrideUrl = addressGroupService.endpointOverrides?.[String(endpoint.rpcType)];
+        const rpcType = normalizeRpcType(endpoint.rpcType);
+        const overrideUrl = addressGroupService.endpointOverrides?.[String(rpcType)];
 
         return {
           // Keep expected services in sync with BuildSupplierServiceConfigHandler.
           url:
             overrideUrl ||
-            getEndpointInterpolatedUrl(endpoint, {
-              sid: addressGroupService.serviceId,
-              rm: key.addressGroup?.relayMiner?.identity || "",
-              region: key.addressGroup?.relayMiner?.region?.urlValue || "",
-              domain: key.addressGroup?.relayMiner?.domain || "",
-            }),
-          // Normalize rpcType to numeric to match BuildSupplierServiceConfigHandler
-          rpcType:
-            typeof endpoint.rpcType === "string"
-              ? (RPCTypeMap[endpoint.rpcType as keyof typeof RPCTypeMap] ?? -1)
-              : endpoint.rpcType,
+            getEndpointInterpolatedUrl(
+              { ...endpoint, rpcType },
+              {
+                sid: addressGroupService.serviceId,
+                rm: key.addressGroup?.relayMiner?.identity || "",
+                region: key.addressGroup?.relayMiner?.region?.urlValue || "",
+                domain: key.addressGroup?.relayMiner?.domain || "",
+              },
+            ),
+          rpcType,
           configs: [],
         };
       }),

@@ -420,6 +420,34 @@ describe("getExpectedServicesFromKey", () => {
       { url: "https://svc1.example.com/rest", rpcType: RPCType.REST, configs: [] },
     ]);
   });
+
+  it("uses numeric endpoint override keys for string rpc types", () => {
+    const key = {
+      address: "pokt1supplier",
+      ownerAddress: "pokt1owner",
+      addressGroup: {
+        relayMiner: { identity: "rm1", domain: "example.com", region: { urlValue: "us" } },
+        addressGroupServices: [
+          {
+            serviceId: "svc1",
+            addSupplierShare: false,
+            supplierShare: 0,
+            revShare: [],
+            endpointOverrides: { [String(RPCType.JSON_RPC)]: "https://override.example.com" },
+            service: {
+              endpoints: [{ rpcType: "JSON_RPC", url: "https://{sid}.example.com" }],
+            },
+          },
+        ],
+      },
+    } as any;
+
+    const [service] = getExpectedServicesFromKey(key);
+
+    expect(service!.endpoints).toEqual([
+      { url: "https://override.example.com", rpcType: RPCType.JSON_RPC, configs: [] },
+    ]);
+  });
 });
 
 // ── Fixture-based tests ─────────────────────────────────────────────────

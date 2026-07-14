@@ -108,9 +108,34 @@ describe('BuildSupplierServiceConfigHandler', () => {
             operatorAddress,
         );
         expect(mockedGetEpUrl).toHaveBeenCalledWith(
-            input.services[0]?.endpoints[0],
+            {...input.services[0]?.endpoints[0], rpcType: 4},
             interpolationParams,
         );
+    });
+
+    it('uses numeric endpoint override keys for string rpc types', () => {
+        const overrideInput = {
+            ...input,
+            addressGroup: {
+                ...input.addressGroup,
+                addressGroupServices: [
+                    {
+                        ...addressGroupServiceConfig,
+                        endpointOverrides: {
+                            '4': 'https://override.example.com',
+                        },
+                    },
+                ],
+            },
+        } as BuildSupplierServiceConfigInput;
+
+        const result = handler.execute(overrideInput);
+
+        expect(result[0]?.endpoints[0]).toMatchObject({
+            url: 'https://override.example.com',
+            rpcType: 4,
+            configs: [],
+        });
     });
 
     it('leaves the client (owner) with 0% when supplier share + rev shares total 100% (kleomedes/Marco case)', () => {
